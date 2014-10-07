@@ -24,6 +24,7 @@ public class BountyCfg extends EasyConfig {
 
     public void setBounty(int id, String data) {
         bounties.put(id, data);
+        save();
     }
 
     public Map<Integer, String> getBounties() {

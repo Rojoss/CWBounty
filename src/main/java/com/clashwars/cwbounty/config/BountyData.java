@@ -8,6 +8,7 @@ import java.util.Map;
 public class BountyData {
 
     private int id = -1;
+    private boolean collected = false;
     private String creator = "";
     private String target = "";
     private int bounty = -1;
@@ -23,6 +24,14 @@ public class BountyData {
     }
     public void setID(int id) {
         this.id = id;
+    }
+
+
+    public boolean isCollected() {
+        return collected;
+    }
+    public void setCollected(boolean state) {
+        this.collected = state;
     }
 
 
@@ -55,6 +64,11 @@ public class BountyData {
     }
     public void setTimeCreated(long timeCreated) {
         this.timeCreated = timeCreated;
+    }
+
+
+    public long getTimeRemaining() {
+        return Math.max((604800 * 1000) - (System.currentTimeMillis() - getTimeCreated()), 0);
     }
 
 

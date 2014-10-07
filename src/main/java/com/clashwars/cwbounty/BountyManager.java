@@ -59,4 +59,10 @@ public class BountyManager {
         }
         return bounties;
     }
+
+    public int getReward(BountyData bd) {
+        long timeDiff = (System.currentTimeMillis() - bd.getTimeCreated()) / 1000;
+        int hours = (int)timeDiff / 60;
+        return (int)Math.round(bd.getBounty() * (1 - (0.005 * hours)));
+    }
 }
