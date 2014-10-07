@@ -8,12 +8,15 @@
     <artifactId>CWBounty</artifactId>
     <version>1.0</version>
 
+    <description>Bounties.</description>
+
     <repositories>
         <repository>
             <id>bukkit-repo</id>
             <url>http://repo.bukkit.org/content/groups/public/</url>
         </repository>
     </repositories>
+
 
     <dependencies>
         <dependency>
@@ -49,4 +52,13 @@
         </dependency>
     </dependencies>
 
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
 </project>

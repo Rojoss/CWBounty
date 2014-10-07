@@ -1,6 +1,7 @@
 package com.clashwars.cwbounty;
 
 import com.clashwars.cwbounty.commands.Commands;
+import com.clashwars.cwbounty.config.BountyCfg;
 import com.clashwars.cwbounty.events.MainEvents;
 import com.clashwars.cwcore.CWCore;
 import com.massivecraft.factions.Factions;
@@ -17,6 +18,10 @@ public class CWBounty extends JavaPlugin {
     private static CWBounty instance;
     private CWCore cwcore;
     private Factions factions;
+
+    private BountyManager bm;
+
+    private BountyCfg bountyCfg;
 
     private Commands cmds;
 
@@ -44,6 +49,11 @@ public class CWBounty extends JavaPlugin {
             log("Factions couldn't be loaded meaning that faction members can collect bounties of their own faction members.");
         }
 
+        bountyCfg = new BountyCfg("plugins/CWBounty/bounties.yml");
+        bountyCfg.load();
+
+        bm = new BountyManager(this);
+
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(new MainEvents(this), this);
 
@@ -69,5 +79,13 @@ public class CWBounty extends JavaPlugin {
 
     public Factions getFactions() {
         return factions;
+    }
+
+    public BountyCfg getBountyCfg() {
+        return bountyCfg;
+    }
+
+    public BountyManager getBM() {
+        return bm;
     }
 }
