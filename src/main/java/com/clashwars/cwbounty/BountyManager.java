@@ -36,7 +36,7 @@ public class BountyManager {
         cfg.setBounty(id, gson.toJson(bd));
     }
 
-    public int createBounty() {
+    public int createBounty(String creator, String target, int value) {
         BountyData bd = new BountyData();
 
         int i = 0;
@@ -44,6 +44,9 @@ public class BountyManager {
             i++;
         }
         bd.setID(i);
+        bd.setCreator(creator);
+        bd.setTarget(target);
+        bd.setBounty(value);
 
         cfg.setBounty(i, gson.toJson(bd));
         return i;

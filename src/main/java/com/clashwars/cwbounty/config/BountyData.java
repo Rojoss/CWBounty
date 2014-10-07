@@ -1,7 +1,9 @@
 package com.clashwars.cwbounty.config;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BountyData {
 
@@ -10,7 +12,7 @@ public class BountyData {
     private String target = "";
     private int bounty = -1;
     private long timeCreated = System.currentTimeMillis();
-    private List<String> hunters = new ArrayList<String>();
+    private Map<String, Boolean> hunters = new HashMap<String, Boolean>();
 
     public BountyData() {
     }
@@ -56,16 +58,26 @@ public class BountyData {
     }
 
 
-    public List<String> getHunters() {
+    public Map<String, Boolean> getHunters() {
         return hunters;
     }
-    public void setHunters(List<String> hunters) {
+    public void setHunters(Map<String, Boolean> hunters) {
         this.hunters = hunters;
     }
-    public void addHunter(String hunter) {
-        hunters.add(hunter);
+    public void addHunter(String hunter, boolean unlockedCoords) {
+        hunters.put(hunter, unlockedCoords);
     }
     public void removeHunter(String hunter) {
         hunters.remove(hunter);
+    }
+
+    public boolean getCoordsUnlocked(String hunter) {
+        if (hunters.containsKey(hunter)) {
+            return hunters.get(hunter);
+        }
+        return false;
+    }
+    public void setCoordsUnlocked(String hunter, boolean unlocked) {
+        hunters.put(hunter, unlocked);
     }
 }
