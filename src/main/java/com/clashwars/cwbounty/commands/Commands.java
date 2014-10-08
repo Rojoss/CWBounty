@@ -200,10 +200,10 @@ public class Commands {
                         }
                     } else {
                         //Unconfirmed
-                        player.sendMessage(Util.formatMsg("&6You're about to accept a bounty on &5" + bd.getTarget()));
-                        player.sendMessage(Util.formatMsg("&6You will have to pay &510% of bounty which is &e" + price + " coins&6."));
-                        player.sendMessage(Util.formatMsg("&6You will get this money back when you collected the bounty."));
-                        player.sendMessage(Util.formatMsg("&6If you don't kill him first you won't get it back though."));
+                        player.sendMessage(Util.formatMsg("&6You're about to accept a bounty on &5" + bd.getTarget() + " "
+                                + "&6You will have to pay &510% of bounty which is &e" + price + " coins&6. "
+                                + "You will get this money back when you collected the bounty. "
+                                + "If you don't kill him first you won't get it back though."));
                         player.sendMessage(Util.formatMsg("&6Use &5/" + label + " " + args[0] + " " + args[1] + " confirm/c &6to confirm this."));
                     }
                     return true;
@@ -256,8 +256,8 @@ public class Commands {
                         }
                     } else {
                         //Unconfirmed
-                        player.sendMessage(Util.formatMsg("&6You're about to cancel an accepted bounty."));
-                        player.sendMessage(Util.formatMsg("&6You will only get 50% of the paid money back which is &e" + refund + " coins&6."));
+                        player.sendMessage(Util.formatMsg("&6You're about to cancel an accepted bounty. "
+                                + "You will only get &550% &6of the paid coins back which is &e" + refund + " coins&6."));
                         player.sendMessage(Util.formatMsg("&6Use &5/" + label + " " + args[0] + " " + args[1] + " confirm/c &6to confirm this."));
                     }
                     return true;
@@ -363,8 +363,9 @@ public class Commands {
                         }
 
                         if (huntersWithCoords.size() > 0) {
-                            if (cwb.getPlayerCfg().getProtection(player.getName()) > 0) {
-                                sender.sendMessage(CWUtil.integrateColor("&6Nobody can see your coordinates for &a&l" + cwb.getPlayerCfg().getProtection(player.getName()) + " &6more days!"));
+                            if (cwb.getPlayerCfg().hasProtection(player.getName())) {
+                                sender.sendMessage(CWUtil.integrateColor("&6Nobody can see your coordinates till &a"
+                                        + CWUtil.getHourMinSecStr(cwb.getPlayerCfg().getProtection(player.getName()), ChatColor.GREEN, ChatColor.GRAY) + "&l!"));
                             } else {
                                 sender.sendMessage(CWUtil.integrateColor("&6The following hunters can see your location&8: &5" + CWUtil.implode(huntersWithCoords, "&8, &5")));
                             }
@@ -409,14 +410,20 @@ public class Commands {
                         //Confirmed
                         cwb.getEconomy().withdrawPlayer(player, price);
 
-                        cwb.getPlayerCfg().setProtection(player.getName(), cwb.getPlayerCfg().getProtection(player.getName()) + days);
+                        long protTime = System.currentTimeMillis();
+                        if (cwb.getPlayerCfg().hasProtection(player.getName())) {
+                            protTime = cwb.getPlayerCfg().getProtection(player.getName());
+                        }
+
+                        cwb.getPlayerCfg().setProtection(player.getName(), protTime + (days * 86400));
                         player.sendMessage(Util.formatMsg("&6You have bought &a" + days + " &6days of protection!"));
-                        player.sendMessage(Util.formatMsg("&6You are protected for &a" + cwb.getPlayerCfg().getProtection(player.getName()) + " &6more days."));
+                        player.sendMessage(Util.formatMsg("&6You are protected till &a"
+                                + CWUtil.getHourMinSecStr(cwb.getPlayerCfg().getProtectionTimeRemaining(player.getName()), ChatColor.GREEN, ChatColor.GRAY) + "&6."));
                     } else {
                         //Unconfirmed
-                        player.sendMessage(Util.formatMsg("&6You're about to purchase &5" + days + " &6days of protection for &e₵" + price + "&6."));
-                        player.sendMessage(Util.formatMsg("&6During these days bounty hunters can't see your location."));
-                        player.sendMessage(Util.formatMsg("&6This can not be undone!"));
+                        player.sendMessage(Util.formatMsg("&6You're about to purchase &5" + days + " &6days of protection for &e₵" + price + "&6. "
+                                + "During these days bounty hunters can't see your location. "
+                                + "This can not be undone!"));
                         player.sendMessage(Util.formatMsg("&6Use &5/" + label + " " + args[0] + " " + args[1] + " confirm/c &6to confirm this."));
                     }
                     return true;
@@ -474,22 +481,22 @@ public class Commands {
                         player.sendMessage(Util.formatMsg("&6Coordinates have been purchased for &e" + price + " coins&6."));
                         if (cwb.getServer().getPlayer(bd.getTarget()) != null && cwb.getServer().getPlayer(bd.getTarget()).isOnline()) {
                             Player target =  cwb.getServer().getPlayer(bd.getTarget());
-                            if (cwb.getPlayerCfg().getProtection(bd.getTarget()) <= 0) {
+                            if (!cwb.getPlayerCfg().hasProtection(bd.getTarget())) {
                                 target.sendMessage(Util.formatMsg("&5" + player.getName() + " &6can now locate you."));
                                 target.sendMessage(Util.formatMsg("&6Use &5/bounty protect &6to hide your location for coins."));
                             } else {
                                 target.sendMessage(Util.formatMsg("&5" + player.getName() + " &6has purchased your location."));
-                                target.sendMessage(Util.formatMsg("&6However, you are protected for &5" + cwb.getPlayerCfg().getProtection(bd.getTarget()) + " &6more days."));
+                                target.sendMessage(Util.formatMsg("&6However, you are protected for &5" + cwb.getPlayerCfg().getProtectionDays(bd.getTarget()) + " &6more days."));
                             }
                         }
                     } else {
                         //Unconfirmed
-                        player.sendMessage(Util.formatMsg("&6You're about to purchase &5" + bd.getTarget() + "'s &6coordinates. &e&l₵" + price));
-                        player.sendMessage(Util.formatMsg("&6His location will update every time you check it."));
-                        player.sendMessage(Util.formatMsg("&6However, if he's near his faction home it wont show the location."));
-                        player.sendMessage(Util.formatMsg("&6He can also purchase protection which makes you unable to locate him."));
-                        player.sendMessage(Util.formatMsg("&6And the location is random within 100 blocks radius of him."));
-                        player.sendMessage(Util.formatMsg("&5" + bd.getTarget() + " &6has &5" + cwb.getPlayerCfg().getProtection(bd.getTarget()) + " &6days of protection currently."));
+                        player.sendMessage(Util.formatMsg("&6You're about to purchase &5" + bd.getTarget() + "'s &6coordinates. &e&l₵" + price
+                                + "&6His location will update every time you check it. "
+                                + "However, if he's near his faction home it wont show the location. "
+                                + "He can also purchase protection which makes you unable to locate him. "
+                                + "And the location is random within 100 blocks radius of him."));
+                        player.sendMessage(Util.formatMsg("&5" + bd.getTarget() + " &6has &5" + cwb.getPlayerCfg().getProtectionDays(bd.getTarget()) + " &6days of protection currently."));
                         player.sendMessage(Util.formatMsg("&6Use &5/" + label + " " + args[0] + " " + args[1] + " confirm/c &6to confirm this."));
                     }
                     return true;
