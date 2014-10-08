@@ -63,6 +63,8 @@ public class Commands {
                     }
                     int value = CWUtil.getInt(args[2]);
 
+                    //TODO: Check if player has enough money.
+
                     //TODO: Take money from player.
 
                     int ID = cwb.getBM().createBounty(player.getName(), target.getName(), value);
@@ -133,11 +135,7 @@ public class Commands {
 
                     //Coords
                     if (bd.getHunters().containsKey(sender.getName())) {
-                        Location targetLoc = cwb.getServer().getPlayer(bd.getTarget()).getLocation();
-                        String targetLocStr = "X:" + targetLoc.getBlockX() + " Y:" + targetLoc.getBlockY() + " Z:" + targetLoc.getBlockZ();
-
-                        String coords = (bd.getHunters().get(sender.getName()) ? targetLocStr : "&7Not purchased");
-                        //TODO: Check if person has protection against coords.
+                        String coords = (bd.getHunters().get(sender.getName()) ? bm.getLocation(bd) : "&7Not purchased");
                         sender.sendMessage(CWUtil.integrateColor("&6Coordinates&8: &5" + coords));
                     }
 
@@ -178,6 +176,8 @@ public class Commands {
                     }
 
                     int price = Math.round(bd.getBounty() / 10);
+
+                    //TODO: Check if player has enough money.
 
                     if (args.length >= 3) {
                         //Confirmed
@@ -353,14 +353,129 @@ public class Commands {
                         }
 
                         if (huntersWithCoords.size() > 0) {
-                            //TODO: Check for protection against coords then show other msg.
-                            sender.sendMessage(CWUtil.integrateColor("&6The following hunters can see your location&8: &5" + CWUtil.implode(huntersWithCoords, "&8, &5")));
+                            if (cwb.getPlayerCfg().getProtection(player.getName()) > 0) {
+                                sender.sendMessage(CWUtil.integrateColor("&6Nobody can see your coordinates for &a&l" + cwb.getPlayerCfg().getProtection(player.getName()) + " &6more days!"));
+                            } else {
+                                sender.sendMessage(CWUtil.integrateColor("&6The following hunters can see your location&8: &5" + CWUtil.implode(huntersWithCoords, "&8, &5")));
+                            }
                         } else {
                             sender.sendMessage(CWUtil.integrateColor("&6Nobody has bought your coordinates."));
                         }
                         sender.sendMessage(CWUtil.integrateColor("&8===== &4Use &c/" + label + " " + args[0] + " " + (page + 1) + " &4for the next page &8====="));
                     } else {
                         sender.sendMessage(CWUtil.integrateColor("&a&lThere are no bounties on you!"));
+                    }
+                    return true;
+                }
+
+                //##########################################################################################################################
+                //################################################ /bounty protect {days} ##################################################
+                //##########################################################################################################################
+                if (args[0].equalsIgnoreCase("protect") || args[0].equalsIgnoreCase("protection") || args[0].equalsIgnoreCase("prot")) {
+                    if (!(sender instanceof Player)) {
+                        sender.sendMessage(Util.formatMsg("Player command only."));
+                        return true;
+                    }
+                    Player player = (Player) sender;
+
+                    if (args.length < 2) {
+                        player.sendMessage(Util.formatMsg("&cInvalid command usage. &4/" + label + " " + args[0] + " {days}"));
+                        return true;
+                    }
+
+                    if (CWUtil.getInt(args[1]) <= 0) {
+                        player.sendMessage(Util.formatMsg("&cDays must be a number above 0."));
+                        return true;
+                    }
+                    int days = CWUtil.getInt(args[1]);
+                    int price = days * 200;
+
+                    //TODO: Check if player has enough money.
+
+                    if (args.length >= 3) {
+                        //Confirmed
+
+                        //TODO: Take money.
+
+                        cwb.getPlayerCfg().setProtection(player.getName(), cwb.getPlayerCfg().getProtection(player.getName()) + days);
+                        player.sendMessage(Util.formatMsg("&6You have bought &a" + days + " &6days of protection!"));
+                        player.sendMessage(Util.formatMsg("&6You are protected for &a" + cwb.getPlayerCfg().getProtection(player.getName()) + " &6more days."));
+                    } else {
+                        //Unconfirmed
+                        player.sendMessage(Util.formatMsg("&6You're about to purchase &5" + days + " &6days of protection for &e₵" + price + "&6."));
+                        player.sendMessage(Util.formatMsg("&6During these days bounty hunters can't see your location."));
+                        player.sendMessage(Util.formatMsg("&6This can not be undone!"));
+                        player.sendMessage(Util.formatMsg("&6Use &5/" + label + " " + args[0] + " " + args[1] + " confirm/c &6to confirm this."));
+                    }
+                    return true;
+                }
+
+                //##########################################################################################################################
+                //################################################## /bounty coords {ID} ###################################################
+                //##########################################################################################################################
+                if (args[0].equalsIgnoreCase("coords") || args[0].equalsIgnoreCase("locate") || args[0].equalsIgnoreCase("location") || args[0].equalsIgnoreCase("buycoords")
+                        || args[0].equalsIgnoreCase("purchasecoords") || args[0].equalsIgnoreCase("buyloc") || args[0].equalsIgnoreCase("purchaseloc") || args[0].equalsIgnoreCase("loc")) {
+                    if (!(sender instanceof Player)) {
+                        sender.sendMessage(Util.formatMsg("Player command only."));
+                        return true;
+                    }
+                    Player player = (Player) sender;
+
+                    if (args.length < 2) {
+                        player.sendMessage(Util.formatMsg("&cInvalid command usage. &4/" + label + " " + args[0] + " {ID}"));
+                        return true;
+                    }
+
+                    if (CWUtil.getInt(args[1]) < 0) {
+                        player.sendMessage(Util.formatMsg("&cID must be a number."));
+                        return true;
+                    }
+
+                    BountyData bd = bm.getBounty(CWUtil.getInt(args[1]));
+                    if (bd == null) {
+                        player.sendMessage(Util.formatMsg("&cNo bounty found with this ID."));
+                        player.sendMessage(Util.formatMsg("&cUse &4/bounty status &cto see all your bounties."));
+                        return true;
+                    }
+
+                    if (!bd.getHunters().containsKey(player.getName())) {
+                        player.sendMessage(Util.formatMsg("&cYou haven't accepted this bounty."));
+                        return true;
+                    }
+
+                    if (bd.getCoordsUnlocked(player.getName())) {
+                        player.sendMessage(Util.formatMsg("&cCoordinates already purchased."));
+                        return true;
+                    }
+                    int price = 2500;
+
+                    //TODO: Check if player has enough money.
+
+                    if (args.length >= 3) {
+                        //Confirmed
+                        //TODO: Take money.
+                        bd.setCoordsUnlocked(player.getName(), true);
+
+                        player.sendMessage(Util.formatMsg("&6Coordinates have been purchased for &e" + price + " coins&6."));
+                        if (cwb.getServer().getPlayer(bd.getTarget()) != null && cwb.getServer().getPlayer(bd.getTarget()).isOnline()) {
+                            Player target =  cwb.getServer().getPlayer(bd.getTarget());
+                            if (cwb.getPlayerCfg().getProtection(bd.getTarget()) <= 0) {
+                                target.sendMessage(Util.formatMsg("&5" + player.getName() + " &6can now locate you."));
+                                target.sendMessage(Util.formatMsg("&6Use &5/bounty protect &6to hide your location for coins."));
+                            } else {
+                                target.sendMessage(Util.formatMsg("&5" + player.getName() + " &6has purchased your location."));
+                                target.sendMessage(Util.formatMsg("&6However, you are protected for &5" + cwb.getPlayerCfg().getProtection(bd.getTarget()) + " &6more days."));
+                            }
+                        }
+                    } else {
+                        //Unconfirmed
+                        player.sendMessage(Util.formatMsg("&6You're about to purchase &5" + bd.getTarget() + "'s &6coordinates. &e&l₵" + price));
+                        player.sendMessage(Util.formatMsg("&6His location will update every time you check it."));
+                        player.sendMessage(Util.formatMsg("&6However, if he's near his faction home it wont show the location."));
+                        player.sendMessage(Util.formatMsg("&6He can also purchase protection which makes you unable to locate him."));
+                        player.sendMessage(Util.formatMsg("&6And the location is random within 100 blocks radius of him."));
+                        player.sendMessage(Util.formatMsg("&5" + bd.getTarget() + " &6has &5" + cwb.getPlayerCfg().getProtection(bd.getTarget()) + " &6days of protection currently."));
+                        player.sendMessage(Util.formatMsg("&6Use &5/" + label + " " + args[0] + " " + args[1] + " confirm/c &6to confirm this."));
                     }
                     return true;
                 }
@@ -376,6 +491,8 @@ public class Commands {
             sender.sendMessage(CWUtil.integrateColor("&8(&7You won't get your coins back!&8)"));
             sender.sendMessage(CWUtil.integrateColor("&6/" + label + " status [page] &8- &5See the status of your accepted bounties."));
             sender.sendMessage(CWUtil.integrateColor("&6/" + label + " me [page] &8- &5See all bounties on yourself."));
+            sender.sendMessage(CWUtil.integrateColor("&6/" + label + " protect {days} &8- &5Purchase protection per day!"));
+            sender.sendMessage(CWUtil.integrateColor("&6/" + label + " coords {ID} &8- &5Purchase coords of an active bounty!"));
             return true;
         }
         return false;

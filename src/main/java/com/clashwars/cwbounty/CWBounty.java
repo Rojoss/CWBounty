@@ -2,6 +2,7 @@ package com.clashwars.cwbounty;
 
 import com.clashwars.cwbounty.commands.Commands;
 import com.clashwars.cwbounty.config.BountyCfg;
+import com.clashwars.cwbounty.config.PlayerCfg;
 import com.clashwars.cwbounty.events.MainEvents;
 import com.clashwars.cwcore.CWCore;
 import com.massivecraft.factions.Factions;
@@ -22,6 +23,7 @@ public class CWBounty extends JavaPlugin {
     private BountyManager bm;
 
     private BountyCfg bountyCfg;
+    private PlayerCfg playerCfg;
 
     private Commands cmds;
 
@@ -51,6 +53,9 @@ public class CWBounty extends JavaPlugin {
 
         bountyCfg = new BountyCfg("plugins/CWBounty/bounties.yml");
         bountyCfg.load();
+
+        playerCfg = new PlayerCfg("plugins/CWBounty/playerData.yml");
+        playerCfg.load();
 
         bm = new BountyManager(this);
 
@@ -83,6 +88,10 @@ public class CWBounty extends JavaPlugin {
 
     public BountyCfg getBountyCfg() {
         return bountyCfg;
+    }
+
+    public PlayerCfg getPlayerCfg() {
+        return playerCfg;
     }
 
     public BountyManager getBM() {
