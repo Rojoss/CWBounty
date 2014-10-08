@@ -32,6 +32,14 @@
         </dependency>
 
         <dependency>
+            <groupId>org.bukkit.craftbukkit</groupId>
+            <artifactId>craftbukkit</artifactId>
+            <version>1.7.10-R0.1</version>
+            <scope>compile</scope>
+            <type>jar</type>
+        </dependency>
+
+        <dependency>
             <groupId>com.clashwars</groupId>
             <artifactId>CWCore</artifactId>
             <version>1.0</version>

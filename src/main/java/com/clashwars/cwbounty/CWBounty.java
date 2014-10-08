@@ -5,6 +5,7 @@ import com.clashwars.cwbounty.config.BountyCfg;
 import com.clashwars.cwbounty.config.PlayerCfg;
 import com.clashwars.cwbounty.events.MainEvents;
 import com.clashwars.cwcore.CWCore;
+import com.clashwars.cwcore.utils.CWUtil;
 import com.massivecraft.factions.Factions;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -80,7 +81,7 @@ public class CWBounty extends JavaPlugin {
     }
 
     public void log(Object msg) {
-        log.info("[CWBounty " + getDescription().getVersion() + "]: " + msg.toString());
+        log.info("[CWBounty " + getDescription().getVersion() + "] " + msg.toString());
     }
 
     public static CWBounty inst() {

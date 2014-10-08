@@ -4,6 +4,7 @@ import com.clashwars.cwbounty.config.BountyCfg;
 import com.clashwars.cwbounty.config.BountyData;
 import com.clashwars.cwbounty.config.PlayerCfg;
 import com.clashwars.cwcore.utils.CWUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.libs.com.google.gson.Gson;
 import org.bukkit.entity.Player;
@@ -60,7 +61,7 @@ public class BountyManager {
 
     public Map<Integer, BountyData> getBounties() {
         Map<Integer, BountyData> bounties = new HashMap<Integer, BountyData>();
-        for (int ID : bounties.keySet()) {
+        for (int ID : bCfg.getBounties().keySet()) {
             bounties.put(ID, gson.fromJson(bCfg.getBounty(ID), BountyData.class));
         }
         return bounties;
@@ -68,7 +69,7 @@ public class BountyManager {
 
     public int getReward(BountyData bd) {
         long timeDiff = (System.currentTimeMillis() - bd.getTimeCreated()) / 1000;
-        int hours = (int)timeDiff / 60;
+        int hours = (int)timeDiff / 3600;
         return (int)Math.round(bd.getBounty() * (1 - (0.005 * hours)));
     }
 

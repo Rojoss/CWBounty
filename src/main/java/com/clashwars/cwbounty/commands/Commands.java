@@ -6,6 +6,7 @@ import com.clashwars.cwbounty.Util;
 import com.clashwars.cwbounty.config.BountyData;
 import com.clashwars.cwcore.utils.CWUtil;
 import org.apache.commons.lang.ArrayUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -85,21 +86,23 @@ public class Commands {
 
                     int page = 1;
                     if (args.length >= 2) {
-                        if (CWUtil.getInt(args[1]) > 1 && CWUtil.getInt(args[1]) <= pages) {
+                        if (CWUtil.getInt(args[1]) >= 1 && CWUtil.getInt(args[1]) <= pages) {
                             page = CWUtil.getInt(args[1]);
                         } else {
                             sender.sendMessage(Util.formatMsg("&cInvalid page number specified. Must be a number between 1 and " + pages));
                             return true;
                         }
                     }
-
                     sender.sendMessage(CWUtil.integrateColor("&8========= &4&lListing all bounties &7[&d" + page + "&8/&5" + pages + "&7] &8========="));
                     List<Integer> bountyIds = new ArrayList<Integer>();
                     bountyIds.addAll(bounties.keySet());
                     for (int i = (pages * 12) - 12; i < pages * 12; i++) {
+                        if (!bountyIds.contains(i)) {
+                            continue;
+                        }
                         BountyData bd = bounties.get(bountyIds.get(i));
                         if (bd != null) {
-                            sender.sendMessage(CWUtil.integrateColor("&8[&5" + bd.getID() + "&8] &6" + bd.getTarget() + " &8- &e" + bd.getBounty()));
+                            sender.sendMessage(CWUtil.integrateColor("&8[&5" + bd.getID() + "&8] &6" + bd.getTarget() + " &8- &e" + bm.getReward(bd) + "&8/&7" + bd.getBounty()));
                         }
                     }
                     sender.sendMessage(CWUtil.integrateColor("&8===== &4Use &c/" + label + " list " + (page+1) + " &4for the next page &8====="));
@@ -133,7 +136,7 @@ public class Commands {
                     sender.sendMessage(CWUtil.integrateColor("&6Target&8: &5" + (bd.getTarget().equalsIgnoreCase(sender.getName()) ? "&c&lYou!" : bd.getTarget())));
                     sender.sendMessage(CWUtil.integrateColor("&6Original reward&8: &5" + bd.getBounty()));
                     sender.sendMessage(CWUtil.integrateColor("&6Current reward&8: &5" + bm.getReward(bd) + " &8(&7What you get&8)"));
-                    sender.sendMessage(CWUtil.integrateColor("&6Time since creation&8: &5" + CWUtil.getHourMinSecStr(System.currentTimeMillis() - bd.getTimeCreated())));
+                    sender.sendMessage(CWUtil.integrateColor("&6Time remaining&8: &5" + CWUtil.getHourMinSecStr(bd.getTimeRemaining(), ChatColor.DARK_RED, ChatColor.RED)));
 
                     //Coords
                     if (bd.getHunters().containsKey(sender.getName())) {
@@ -285,7 +288,7 @@ public class Commands {
 
                     int page = 1;
                     if (args.length >= 2) {
-                        if (CWUtil.getInt(args[1]) > 1 && CWUtil.getInt(args[1]) <= pages) {
+                        if (CWUtil.getInt(args[1]) >= 1 && CWUtil.getInt(args[1]) <= pages) {
                             page = CWUtil.getInt(args[1]);
                         } else {
                             sender.sendMessage(Util.formatMsg("&cInvalid page number specified. Must be a number between 1 and " + pages));
@@ -297,6 +300,9 @@ public class Commands {
                     List<Integer> bountyIds = new ArrayList<Integer>();
                     bountyIds.addAll(bounties.keySet());
                     for (int i = (pages * 12) - 12; i < pages * 12; i++) {
+                        if (!bountyIds.contains(i)) {
+                            continue;
+                        }
                         BountyData bd = bounties.get(bountyIds.get(i));
                         if (bd != null) {
                             String time = CWUtil.getHourMinSecStr(bd.getTimeRemaining(), ChatColor.DARK_RED, ChatColor.RED);
@@ -328,7 +334,7 @@ public class Commands {
 
                     int page = 1;
                     if (args.length >= 2) {
-                        if (CWUtil.getInt(args[1]) > 1 && CWUtil.getInt(args[1]) <= pages) {
+                        if (CWUtil.getInt(args[1]) >= 1 && CWUtil.getInt(args[1]) <= pages) {
                             page = CWUtil.getInt(args[1]);
                         } else {
                             sender.sendMessage(Util.formatMsg("&cInvalid page number specified. Must be a number between 1 and " + pages));
@@ -342,6 +348,9 @@ public class Commands {
                         bountyIds.addAll(bounties.keySet());
                         Set<String> huntersWithCoords = new HashSet<String>();
                         for (int i = (pages * 10) - 10; i < pages * 10; i++) {
+                            if (!bountyIds.contains(i)) {
+                                continue;
+                            }
                             BountyData bd = bounties.get(bountyIds.get(i));
                             if (bd != null) {
                                 String time = CWUtil.getHourMinSecStr(bd.getTimeRemaining(), ChatColor.DARK_RED, ChatColor.RED);
@@ -499,7 +508,7 @@ public class Commands {
             sender.sendMessage(CWUtil.integrateColor("&6/" + label + " accept {ID} &8- &5Accept a bounty and start hunting!"));
             sender.sendMessage(CWUtil.integrateColor("&6/" + label + " cancel {ID} &8- &5Cancel a accepted bounty!"));
             sender.sendMessage(CWUtil.integrateColor("&8(&7You won't get your coins back!&8)"));
-            sender.sendMessage(CWUtil.integrateColor("&6/" + label + " status [page] &8- &5See the status of your accepted bounties."));
+            sender.sendMessage(CWUtil.integrateColor("&6/" + label + " status [page] &8- &5See status of accepted bounties."));
             sender.sendMessage(CWUtil.integrateColor("&6/" + label + " me [page] &8- &5See all bounties on yourself."));
             sender.sendMessage(CWUtil.integrateColor("&6/" + label + " protect {days} &8- &5Purchase protection per day!"));
             sender.sendMessage(CWUtil.integrateColor("&6/" + label + " coords {ID} &8- &5Purchase coords of an active bounty!"));
