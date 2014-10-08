@@ -191,9 +191,7 @@ public class Commands {
                         //Confirmed
                         cwb.getEconomy().withdrawPlayer(player, price);
 
-                        //TODO: Should prob be in bountymanager and add to team and all hunter stuff.
-                        bd.addHunter(sender.getName(), false);
-                        bm.setBounty(bd);
+                        bm.acceptBounty(player.getName(), bd);
 
                         player.sendMessage(Util.formatMsg("&6Bounty accepted for &e" + price + " coins&6."));
                         player.sendMessage(Util.formatMsg("&6Now &4kill him &6to collect your reward!"));
@@ -248,9 +246,7 @@ public class Commands {
 
                     if (args.length >= 3) {
                         //Confirmed
-                        //TODO: Should prob be in bountymanager and remove from team and all hunter stuff.
-                        bd.removeHunter(sender.getName());
-                        bm.setBounty(bd);
+                        bm.cancelBounty(player.getName(), bd);
 
                         cwb.getEconomy().depositPlayer(player, refund);
 

@@ -29,6 +29,10 @@ public class BountyCfg extends EasyConfig {
         save();
     }
 
+    public void removeBounty(int id) {
+        bounties.remove("" + id);
+    }
+
     public Map<Integer, String> getBounties() {
         Map<Integer, String> intBounties = new HashMap<Integer, String>();
         for (String bountyID : bounties.keySet()) {
