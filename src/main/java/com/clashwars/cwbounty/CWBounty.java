@@ -6,6 +6,7 @@ import com.clashwars.cwbounty.config.PlayerCfg;
 import com.clashwars.cwbounty.events.MainEvents;
 import com.clashwars.cwcore.CWCore;
 import com.massivecraft.factions.Factions;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -19,6 +20,7 @@ public class CWBounty extends JavaPlugin {
     private static CWBounty instance;
     private CWCore cwcore;
     private Factions factions;
+    private Economy econ;
 
     private BountyManager bm;
 
@@ -46,6 +48,12 @@ public class CWBounty extends JavaPlugin {
             return;
         }
         cwcore = (CWCore) plugin;
+        econ = cwcore.GetDM().getEconomy();
+        if (econ == null) {
+            log("Vault couldn't be loaded.");
+            setEnabled(false);
+            return;
+        }
         factions = cwcore.GetDM().getFactions();
         if (factions == null) {
             log("Factions couldn't be loaded meaning that faction members can collect bounties of their own faction members.");
@@ -84,6 +92,10 @@ public class CWBounty extends JavaPlugin {
 
     public Factions getFactions() {
         return factions;
+    }
+
+    public Economy getEconomy() {
+        return econ;
     }
 
     public BountyCfg getBountyCfg() {

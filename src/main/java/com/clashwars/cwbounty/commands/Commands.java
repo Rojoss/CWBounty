@@ -63,10 +63,12 @@ public class Commands {
                     }
                     int value = CWUtil.getInt(args[2]);
 
-                    //TODO: Check if player has enough money.
+                    if (cwb.getEconomy().getBalance(player) < value) {
+                        player.sendMessage(Util.formatMsg("&cYou don't have enough coins. You need &4" + value + " coins&c."));
+                        return true;
+                    }
 
-                    //TODO: Take money from player.
-
+                    cwb.getEconomy().withdrawPlayer(player, value);
                     int ID = cwb.getBM().createBounty(player.getName(), target.getName(), value);
                     player.sendMessage(Util.formatMsg("&6Bounty created!"));
                     cwb.getServer().broadcastMessage(Util.formatMsg("&5" + player.getName() + " &6placed a bounty with a value of &e" + value + " coins &6on &5" + target.getName() + "'s &6head!"));
@@ -177,15 +179,18 @@ public class Commands {
 
                     int price = Math.round(bd.getBounty() / 10);
 
-                    //TODO: Check if player has enough money.
+                    if (cwb.getEconomy().getBalance(player) < price) {
+                        player.sendMessage(Util.formatMsg("&cYou don't have enough coins. You need &4" + price + " coins&c."));
+                        return true;
+                    }
 
                     if (args.length >= 3) {
                         //Confirmed
+                        cwb.getEconomy().withdrawPlayer(player, price);
+
                         //TODO: Should prob be in bountymanager and add to team and all hunter stuff.
                         bd.addHunter(sender.getName(), false);
                         bm.setBounty(bd);
-
-                        //TODO: Take money from player.
 
                         player.sendMessage(Util.formatMsg("&6Bounty accepted for &e" + price + " coins&6."));
                         player.sendMessage(Util.formatMsg("&6Now &4kill him &6to collect your reward!"));
@@ -235,8 +240,8 @@ public class Commands {
                         return true;
                     }
 
-                    int refund = Math.round(bd.getBounty() / 20);
-                    refund += bd.getCoordsUnlocked(player.getName()) ? 1250 : 0;
+                    int refund = Math.round(bd.getBounty() / 2);
+                    refund += bd.getCoordsUnlocked(player.getName()) ? 1000 : 0;
 
                     if (args.length >= 3) {
                         //Confirmed
@@ -244,7 +249,7 @@ public class Commands {
                         bd.removeHunter(sender.getName());
                         bm.setBounty(bd);
 
-                        //TODO: Refund money.
+                        cwb.getEconomy().depositPlayer(player, refund);
 
                         player.sendMessage(Util.formatMsg("&6Bounty cancelled, you have been refunded &e" + refund + " coins&6."));
                         if (cwb.getServer().getPlayer(bd.getTarget()) != null && cwb.getServer().getPlayer(bd.getTarget()).isOnline()) {
@@ -390,12 +395,14 @@ public class Commands {
                     int days = CWUtil.getInt(args[1]);
                     int price = days * 200;
 
-                    //TODO: Check if player has enough money.
+                    if (cwb.getEconomy().getBalance(player) < price) {
+                        player.sendMessage(Util.formatMsg("&cYou don't have enough coins. You need &4" + price + " coins&c."));
+                        return true;
+                    }
 
                     if (args.length >= 3) {
                         //Confirmed
-
-                        //TODO: Take money.
+                        cwb.getEconomy().withdrawPlayer(player, price);
 
                         cwb.getPlayerCfg().setProtection(player.getName(), cwb.getPlayerCfg().getProtection(player.getName()) + days);
                         player.sendMessage(Util.formatMsg("&6You have bought &a" + days + " &6days of protection!"));
@@ -447,13 +454,16 @@ public class Commands {
                         player.sendMessage(Util.formatMsg("&cCoordinates already purchased."));
                         return true;
                     }
-                    int price = 2500;
+                    int price = 2000;
 
-                    //TODO: Check if player has enough money.
+                    if (cwb.getEconomy().getBalance(player) < price) {
+                        player.sendMessage(Util.formatMsg("&cYou don't have enough coins. You need &4" + price + " coins&c."));
+                        return true;
+                    }
 
                     if (args.length >= 3) {
                         //Confirmed
-                        //TODO: Take money.
+                        cwb.getEconomy().withdrawPlayer(player, price);
                         bd.setCoordsUnlocked(player.getName(), true);
 
                         player.sendMessage(Util.formatMsg("&6Coordinates have been purchased for &e" + price + " coins&6."));
