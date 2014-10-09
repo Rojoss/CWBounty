@@ -3,9 +3,10 @@ package com.clashwars.cwbounty;
 import com.clashwars.cwbounty.config.BountyCfg;
 import com.clashwars.cwbounty.config.BountyData;
 import com.clashwars.cwbounty.config.PlayerCfg;
+import com.clashwars.cwbounty.config.PluginCfg;
 import com.clashwars.cwcore.utils.CWUtil;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.craftbukkit.libs.com.google.gson.Gson;
 import org.bukkit.entity.Player;
 
@@ -18,11 +19,13 @@ public class BountyManager {
     private Gson gson;
     private BountyCfg bCfg;
     private PlayerCfg pCfg;
+    private PluginCfg cfg;
 
     public BountyManager(CWBounty cwb) {
         this.cwb = cwb;
         bCfg = cwb.getBountyCfg();
         pCfg = cwb.getPlayerCfg();
+        cfg = cwb.getCfg();
         gson = new Gson();
     }
 
@@ -107,6 +110,44 @@ public class BountyManager {
     }
 
     /**
+     * Collect a bounty and give the bounty value to the hunter.
+     * Also remove the bounty from the config.
+     * @param bd The bounty
+     * @param hunterName The hunter who killed the bounty target.
+     */
+    public void collectBounty(BountyData bd, String hunterName) {
+        if (expireBounty(bd)) {
+            return;
+        }
+        Player hunter = cwb.getServer().getPlayer(hunterName);
+        cwb.getEconomy().depositPlayer(hunter, getReward(bd));
+        cwb.getEconomy().depositPlayer(hunter, Math.round(bd.getBounty() / 100 * cfg.PRICE__ACCEPT_DEPOSIT_PERCENTAGE));
+        hunter.sendMessage(Util.formatMsg("&6You collected a bounty of &e" + getReward(bd) + " coins &6by killing &5" + bd.getTarget() + "&6."));
+        hunter.sendMessage(Util.formatMsg("&6You have also been refunded the coins paid for accepting the bounty."));
+        cwb.getServer().broadcastMessage(Util.formatMsg("&4" + hunterName + " &6collected a bounty of &e" + getReward(bd) + " coins &6by killing " + bd.getTarget() + "."));
+        removeBounty(bd);
+    }
+
+    /**
+     * Expire a bounty and give back 50% of the value to the creator.
+     * Also remove the bounty from the config.
+     * @param bd The bounty
+     * @return If the bounty is expired and removed or not.
+     */
+    public boolean expireBounty(BountyData bd) {
+        if (bd.getTimeRemaining() <= 0) {
+            OfflinePlayer creator = cwb.getServer().getPlayer(bd.getCreator());
+            cwb.getEconomy().depositPlayer(creator, (bd.getBounty() / 100 * cfg.PRICE__EXPIRE_REFUND_PERCENTAGE));
+            if (creator != null && creator.isOnline()) {
+                ((Player)creator).sendMessage(Util.formatMsg("&6Your bounty expired. 50% of the original bounty value has been refunded."));
+            }
+            removeBounty(bd);
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Accept a bounty and add this player as hunter.
      * @param hunter The name of the hunter that has accepted the bounty.
      * @param bd The bounty.
@@ -141,7 +182,7 @@ public class BountyManager {
     public int getReward(BountyData bd) {
         long timeDiff = (System.currentTimeMillis() - bd.getTimeCreated()) / 1000;
         int hours = (int)timeDiff / 3600;
-        return (int)Math.round(bd.getBounty() * (1 - (0.005 * hours)));
+        return (int)Math.round(bd.getBounty() * (1 - (cfg.PRICE__PERCENTAGE_REDUCED_PER_DAY * hours)));
     }
 
 
@@ -153,10 +194,6 @@ public class BountyManager {
      * @return String with location or message with reason why no location.
      */
     public String getLocation(BountyData bd) {
-        if (bd.getTimeRemaining() <= 0 || bd.isCollected()) {
-            return "&7Already collected";
-        }
-
         Player target = cwb.getServer().getPlayer(bd.getTarget());
         if (target == null || !target.isOnline()) {
             return "&4Offline";
@@ -171,7 +208,7 @@ public class BountyManager {
         Location targetLoc = target.getLocation();
         int x = targetLoc.getBlockX();
         int z = targetLoc.getBlockZ();
-        int r = 100;
+        int r = cfg.RANDOM_COORDS_RADIUS;
         Location loc = new Location(targetLoc.getWorld(), CWUtil.random(x-r, x+r), targetLoc.getBlockY(), CWUtil.random(z - r, z + r));
 
         return "&4X:&c" + loc.getBlockX() + " &2Y:&a" + loc.getBlockY() + " &1Z:&9" + loc.getBlockZ();

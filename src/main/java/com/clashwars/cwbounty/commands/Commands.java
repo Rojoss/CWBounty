@@ -4,11 +4,9 @@ import com.clashwars.cwbounty.BountyManager;
 import com.clashwars.cwbounty.CWBounty;
 import com.clashwars.cwbounty.Util;
 import com.clashwars.cwbounty.config.BountyData;
+import com.clashwars.cwbounty.config.PluginCfg;
 import com.clashwars.cwcore.utils.CWUtil;
-import org.apache.commons.lang.ArrayUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -18,10 +16,12 @@ import java.util.*;
 public class Commands {
     private CWBounty cwb;
     private BountyManager bm;
+    private PluginCfg cfg;
 
     public Commands(CWBounty cwb) {
         this.cwb = cwb;
         this.bm = cwb.getBM();
+        this.cfg = cwb.getCfg();
     }
 
 
@@ -33,7 +33,19 @@ public class Commands {
                 //###################################################### /bounty help ######################################################
                 //##########################################################################################################################
                 if (args[0].equalsIgnoreCase("help")) {
-
+                    sender.sendMessage(CWUtil.integrateColor("&8=========== &4&lBounty Help &8============"
+                            + "&6You can place a bounty bounty on any player."
+                            + "When this player is killed by another player he will get the bounty."
+                            + "Every hour the bounty reward will decrease by " + cfg.PRICE__PERCENTAGE_REDUCED_PER_DAY + "% of the original value."
+                            + "A bounty has to be collected within 7 days else it will expire."
+                            + "When a bounty is expired the creator will get " + cfg.PRICE__EXPIRE_REFUND_PERCENTAGE + "% of the original bounty value."
+                            + "Before you kill a bounty you have to accept it else it wont count."
+                            + "To accept a bounty you first have to pay " + cfg.PRICE__ACCEPT_DEPOSIT_PERCENTAGE + "% of the reward."
+                            + "This " + cfg.PRICE__ACCEPT_DEPOSIT_PERCENTAGE + "% will be refunded when you collect the bounty and you will of course also get the bounty."
+                            + "It's also possible to purchase coordinates as a hunter."
+                            + "These coords are a random location within " + cfg.RANDOM_COORDS_RADIUS + " blocks of the target and wont show up if the target is near the faction home."
+                            + "If you're the one being hunted you can also purchase protection per day which will hide your location from the hunters."
+                    ));
                     return true;
                 }
 
@@ -57,8 +69,12 @@ public class Commands {
                         return true;
                     }
                     Player target = cwb.getServer().getPlayer(args[1]);
+                    if (target.getName().equalsIgnoreCase(player.getName())) {
+                        player.sendMessage(Util.formatMsg("Can't place a bounty on yourself..."));
+                        return true;
+                    }
 
-                    if (CWUtil.getInt(args[2]) < 250) {
+                    if (CWUtil.getInt(args[2]) < cfg.PRICE__CREATE_MIN_REQUIRED) {
                         player.sendMessage(Util.formatMsg("&cThe bounty has to be at least &4250 coins&c."));
                         return true;
                     }
@@ -82,7 +98,7 @@ public class Commands {
                 //##########################################################################################################################
                 if (args[0].equalsIgnoreCase("list")) {
                     Map<Integer, BountyData> bounties = bm.getBounties();
-                    int pages = Math.max(bounties.size() > 0 ? (int)Math.ceil(bounties.size()/12) : 1, 1);
+                    int pages = Math.max(bounties.size() > 0 ? (int)Math.ceil(bounties.size()/cfg.RESULTS_PER_PAGE) : 1, 1);
 
                     int page = 1;
                     if (args.length >= 2) {
@@ -96,12 +112,15 @@ public class Commands {
                     sender.sendMessage(CWUtil.integrateColor("&8========= &4&lListing all bounties &7[&d" + page + "&8/&5" + pages + "&7] &8========="));
                     List<Integer> bountyIds = new ArrayList<Integer>();
                     bountyIds.addAll(bounties.keySet());
-                    for (int i = (pages * 12) - 12; i < pages * 12; i++) {
+                    for (int i = (pages * cfg.RESULTS_PER_PAGE) - cfg.RESULTS_PER_PAGE; i < pages * cfg.RESULTS_PER_PAGE; i++) {
                         if (!bountyIds.contains(i)) {
                             continue;
                         }
                         BountyData bd = bounties.get(bountyIds.get(i));
                         if (bd != null) {
+                            if (bm.expireBounty(bd)) {
+                                continue;
+                            }
                             sender.sendMessage(CWUtil.integrateColor("&8[&5" + bd.getID() + "&8] &6" + bd.getTarget() + " &8- &e" + bm.getReward(bd) + "&8/&7" + bd.getBounty()));
                         }
                     }
@@ -130,8 +149,12 @@ public class Commands {
                         return true;
                     }
 
+                    if (bm.expireBounty(bd)) {
+                        sender.sendMessage(Util.formatMsg("&cThis bounty just expired."));
+                        return true;
+                    }
+
                     sender.sendMessage(CWUtil.integrateColor("&8========= &4&lBounty information &8========="));
-                    sender.sendMessage(CWUtil.integrateColor("&6Status&8: &5" + (bd.isCollected() ? "&4Collected" : "&aNot yet collected")));
                     sender.sendMessage(CWUtil.integrateColor("&6Creator&8: &5" + (bd.getTarget().equalsIgnoreCase(sender.getName()) ? "&aYou!" : bd.getTarget())));
                     sender.sendMessage(CWUtil.integrateColor("&6Target&8: &5" + (bd.getTarget().equalsIgnoreCase(sender.getName()) ? "&c&lYou!" : bd.getTarget())));
                     sender.sendMessage(CWUtil.integrateColor("&6Original reward&8: &5" + bd.getBounty()));
@@ -175,12 +198,22 @@ public class Commands {
                         return true;
                     }
 
+                    if (bm.expireBounty(bd)) {
+                        player.sendMessage(Util.formatMsg("&cThis bounty just expired."));
+                        return true;
+                    }
+
+                    if (bd.getTarget().equalsIgnoreCase(player.getName())) {
+                        player.sendMessage(Util.formatMsg("Can't accept your own bounty..."));
+                        return true;
+                    }
+
                     if (bd.getHunters().containsKey(player.getName())) {
                         player.sendMessage(Util.formatMsg("&cYou've already accepted this bounty."));
                         return true;
                     }
 
-                    int price = Math.round(bd.getBounty() / 10);
+                    int price = Math.round(bd.getBounty() / 100 * cfg.PRICE__ACCEPT_DEPOSIT_PERCENTAGE);
 
                     if (cwb.getEconomy().getBalance(player) < price) {
                         player.sendMessage(Util.formatMsg("&cYou don't have enough coins. You need &4" + price + " coins&c."));
@@ -236,13 +269,18 @@ public class Commands {
                         return true;
                     }
 
+                    if (bm.expireBounty(bd)) {
+                        player.sendMessage(Util.formatMsg("&cThis bounty just expired."));
+                        return true;
+                    }
+
                     if (!bd.getHunters().containsKey(player.getName())) {
                         player.sendMessage(Util.formatMsg("&cYou haven't accepted this bounty."));
                         return true;
                     }
 
-                    int refund = Math.round(bd.getBounty() / 2);
-                    refund += bd.getCoordsUnlocked(player.getName()) ? 1000 : 0;
+                    int refund = Math.round(bd.getBounty() / 100 * cfg.PRICE__CANCEL_REFUND_PERCENTAGE);
+                    refund += bd.getCoordsUnlocked(player.getName()) ? cfg.PRICE__COORDS : 0;
 
                     if (args.length >= 3) {
                         //Confirmed
@@ -275,12 +313,12 @@ public class Commands {
 
                     //Get all bounties which player is hunting.
                     Map<Integer, BountyData> bounties = new HashMap<Integer, BountyData>();
-                    for (int ID : bounties.keySet()) {
+                    for (int ID : bm.getBounties().keySet()) {
                         if (bounties.get(ID).getHunters().containsKey(player.getName())) {
                             bounties.put(ID, bounties.get(ID));
                         }
                     }
-                    int pages = Math.max(bounties.size() > 0 ? (int)Math.ceil(bounties.size()/12) : 1, 1);
+                    int pages = Math.max(bounties.size() > 0 ? (int)Math.ceil(bounties.size()/cfg.RESULTS_PER_PAGE) : 1, 1);
 
                     int page = 1;
                     if (args.length >= 2) {
@@ -295,12 +333,15 @@ public class Commands {
                     sender.sendMessage(CWUtil.integrateColor("&8========= &4&lBounties you're hunting &7[&d" + page + "&8/&5" + pages + "&7] &8========="));
                     List<Integer> bountyIds = new ArrayList<Integer>();
                     bountyIds.addAll(bounties.keySet());
-                    for (int i = (pages * 12) - 12; i < pages * 12; i++) {
+                    for (int i = (pages * cfg.RESULTS_PER_PAGE) - cfg.RESULTS_PER_PAGE; i < pages * cfg.RESULTS_PER_PAGE; i++) {
                         if (!bountyIds.contains(i)) {
                             continue;
                         }
                         BountyData bd = bounties.get(bountyIds.get(i));
                         if (bd != null) {
+                            if (bm.expireBounty(bd)) {
+                                continue;
+                            }
                             String time = CWUtil.getHourMinSecStr(bd.getTimeRemaining(), ChatColor.DARK_RED, ChatColor.RED);
                             sender.sendMessage(CWUtil.integrateColor("&8[&5" + bd.getID() + "&8] &6" + bd.getTarget() + " &8- &e₵" + bm.getReward(bd) + " &7- " + time));
                         }
@@ -321,12 +362,13 @@ public class Commands {
 
                     //Get all bounties with this player as target.
                     Map<Integer, BountyData> bounties = new HashMap<Integer, BountyData>();
-                    for (int ID : bounties.keySet()) {
+                    for (int ID : bm.getBounties().keySet()) {
                         if (bounties.get(ID).getTarget().equalsIgnoreCase(player.getName())) {
                             bounties.put(ID, bounties.get(ID));
                         }
                     }
-                    int pages = Math.max(bounties.size() > 0 ? (int)Math.ceil(bounties.size()/12) : 1, 1);
+                    int resultsPerPage = cfg.RESULTS_PER_PAGE - 2;
+                    int pages = Math.max(bounties.size() > 0 ? (int)Math.ceil(bounties.size()/resultsPerPage) : 1, 1);
 
                     int page = 1;
                     if (args.length >= 2) {
@@ -343,12 +385,15 @@ public class Commands {
                         List<Integer> bountyIds = new ArrayList<Integer>();
                         bountyIds.addAll(bounties.keySet());
                         Set<String> huntersWithCoords = new HashSet<String>();
-                        for (int i = (pages * 10) - 10; i < pages * 10; i++) {
+                        for (int i = (pages * resultsPerPage) - resultsPerPage; i < pages * resultsPerPage; i++) {
                             if (!bountyIds.contains(i)) {
                                 continue;
                             }
                             BountyData bd = bounties.get(bountyIds.get(i));
                             if (bd != null) {
+                                if (bm.expireBounty(bd)) {
+                                    continue;
+                                }
                                 String time = CWUtil.getHourMinSecStr(bd.getTimeRemaining(), ChatColor.DARK_RED, ChatColor.RED);
                                 sender.sendMessage(CWUtil.integrateColor("&8[&5" + bd.getID() + "&8] &6" + bd.getCreator() + " &8- &e₵" + bm.getReward(bd) + " &7- " + time
                                         + " &7- &c" + bd.getHunters().size() + " hunters"));
@@ -399,7 +444,7 @@ public class Commands {
                         return true;
                     }
                     int days = CWUtil.getInt(args[1]);
-                    int price = days * 200;
+                    float price = days * cfg.PRICE__PROTECTION_PER_DAY;
 
                     if (cwb.getEconomy().getBalance(player) < price) {
                         player.sendMessage(Util.formatMsg("&cYou don't have enough coins. You need &4" + price + " coins&c."));
@@ -457,6 +502,11 @@ public class Commands {
                         return true;
                     }
 
+                    if (bm.expireBounty(bd)) {
+                        sender.sendMessage(Util.formatMsg("&cThis bounty just expired."));
+                        return true;
+                    }
+
                     if (!bd.getHunters().containsKey(player.getName())) {
                         player.sendMessage(Util.formatMsg("&cYou haven't accepted this bounty."));
                         return true;
@@ -466,19 +516,18 @@ public class Commands {
                         player.sendMessage(Util.formatMsg("&cCoordinates already purchased."));
                         return true;
                     }
-                    int price = 2000;
 
-                    if (cwb.getEconomy().getBalance(player) < price) {
-                        player.sendMessage(Util.formatMsg("&cYou don't have enough coins. You need &4" + price + " coins&c."));
+                    if (cwb.getEconomy().getBalance(player) < cfg.PRICE__COORDS) {
+                        player.sendMessage(Util.formatMsg("&cYou don't have enough coins. You need &4" + cfg.PRICE__COORDS + " coins&c."));
                         return true;
                     }
 
                     if (args.length >= 3) {
                         //Confirmed
-                        cwb.getEconomy().withdrawPlayer(player, price);
+                        cwb.getEconomy().withdrawPlayer(player, cfg.PRICE__COORDS);
                         bd.setCoordsUnlocked(player.getName(), true);
 
-                        player.sendMessage(Util.formatMsg("&6Coordinates have been purchased for &e" + price + " coins&6."));
+                        player.sendMessage(Util.formatMsg("&6Coordinates have been purchased for &e" + cfg.PRICE__COORDS + " coins&6."));
                         if (cwb.getServer().getPlayer(bd.getTarget()) != null && cwb.getServer().getPlayer(bd.getTarget()).isOnline()) {
                             Player target =  cwb.getServer().getPlayer(bd.getTarget());
                             if (!cwb.getPlayerCfg().hasProtection(bd.getTarget())) {
@@ -491,7 +540,7 @@ public class Commands {
                         }
                     } else {
                         //Unconfirmed
-                        player.sendMessage(Util.formatMsg("&6You're about to purchase &5" + bd.getTarget() + "'s &6coordinates. &e&l₵" + price
+                        player.sendMessage(Util.formatMsg("&6You're about to purchase &5" + bd.getTarget() + "'s &6coordinates. &e&l₵" + cfg.PRICE__COORDS
                                 + "&6His location will update every time you check it. "
                                 + "However, if he's near his faction home it wont show the location. "
                                 + "He can also purchase protection which makes you unable to locate him. "

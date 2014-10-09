@@ -8,7 +8,6 @@ import java.util.Map;
 public class BountyData {
 
     private int id = -1;
-    private boolean collected = false;
     private String creator = "";
     private String target = "";
     private int bounty = -1;
@@ -24,14 +23,6 @@ public class BountyData {
     }
     public void setID(int id) {
         this.id = id;
-    }
-
-
-    public boolean isCollected() {
-        return collected;
-    }
-    public void setCollected(boolean state) {
-        this.collected = state;
     }
 
 

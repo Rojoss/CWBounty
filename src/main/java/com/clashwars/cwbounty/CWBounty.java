@@ -3,6 +3,7 @@ package com.clashwars.cwbounty;
 import com.clashwars.cwbounty.commands.Commands;
 import com.clashwars.cwbounty.config.BountyCfg;
 import com.clashwars.cwbounty.config.PlayerCfg;
+import com.clashwars.cwbounty.config.PluginCfg;
 import com.clashwars.cwbounty.events.MainEvents;
 import com.clashwars.cwcore.CWCore;
 import com.clashwars.cwcore.utils.CWUtil;
@@ -25,6 +26,7 @@ public class CWBounty extends JavaPlugin {
 
     private BountyManager bm;
 
+    private PluginCfg cfg;
     private BountyCfg bountyCfg;
     private PlayerCfg playerCfg;
 
@@ -34,6 +36,8 @@ public class CWBounty extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        bountyCfg.save();
+        playerCfg.save();
         Bukkit.getScheduler().cancelTasks(this);
         log("disabled");
     }
@@ -59,6 +63,9 @@ public class CWBounty extends JavaPlugin {
         if (factions == null) {
             log("Factions couldn't be loaded meaning that faction members can collect bounties of their own faction members.");
         }
+
+        cfg = new PluginCfg("plugins/CWBounty/CWBounty.yml");
+        cfg.load();
 
         bountyCfg = new BountyCfg("plugins/CWBounty/bounties.yml");
         bountyCfg.load();
@@ -97,6 +104,10 @@ public class CWBounty extends JavaPlugin {
 
     public Economy getEconomy() {
         return econ;
+    }
+
+    public PluginCfg getCfg() {
+        return cfg;
     }
 
     public BountyCfg getBountyCfg() {

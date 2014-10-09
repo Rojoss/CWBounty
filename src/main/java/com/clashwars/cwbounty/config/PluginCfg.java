@@ -1,0 +1,22 @@
+package com.clashwars.cwbounty.config;
+
+import com.clashwars.cwcore.config.internal.EasyConfig;
+
+public class PluginCfg extends EasyConfig {
+
+    public int RESULTS_PER_PAGE = 12;
+    public int RANDOM_COORDS_RADIUS = 100;
+    public int FACTION_HOME_RADIUS = 100;
+
+    public float PRICE__CREATE_MIN_REQUIRED = 250;
+    public float PRICE__ACCEPT_DEPOSIT_PERCENTAGE = 10;
+    public float PRICE__CANCEL_REFUND_PERCENTAGE = 50;
+    public float PRICE__EXPIRE_REFUND_PERCENTAGE = 50;
+    public float PRICE__COORDS = 2000;
+    public float PRICE__PROTECTION_PER_DAY = 200;
+    public float PRICE__PERCENTAGE_REDUCED_PER_DAY = 0.005f;
+
+    public PluginCfg(String fileName) {
+        this.setFile(fileName);
+    }
+}
