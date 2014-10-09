@@ -4,9 +4,14 @@ import com.clashwars.cwbounty.config.BountyCfg;
 import com.clashwars.cwbounty.config.BountyData;
 import com.clashwars.cwbounty.config.PlayerCfg;
 import com.clashwars.cwbounty.config.PluginCfg;
+import com.clashwars.cwcore.packet.ParticleEffect;
 import com.clashwars.cwcore.utils.CWUtil;
+import com.massivecraft.factions.entity.Faction;
+import com.massivecraft.factions.entity.UPlayer;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.craftbukkit.libs.com.google.gson.Gson;
 import org.bukkit.entity.Player;
 
@@ -91,6 +96,9 @@ public class BountyManager {
         bd.setBounty(value);
 
         bCfg.setBounty(i, gson.toJson(bd));
+        if (cwb.getBountyTeam().hasPlayer(cwb.getServer().getOfflinePlayer(target))) {
+            cwb.getBountyTeam().addPlayer(cwb.getServer().getOfflinePlayer(target));
+        }
         return i;
     }
 
@@ -106,7 +114,20 @@ public class BountyManager {
      * @param id The ID of the bounty to remove.
      */
     public void removeBounty(int id) {
+        OfflinePlayer target = cwb.getServer().getOfflinePlayer(getBounty(id).getTarget());
         bCfg.removeBounty(id);
+        if (!cwb.getBountyTeam().hasPlayer(target)) {
+            return;
+        }
+        for (BountyData bd : getBounties().values()) {
+            if (!bd.getTarget().equalsIgnoreCase(target.getName())) {
+                continue;
+            }
+            if (cwb.getBountyTeam().hasPlayer(cwb.getServer().getOfflinePlayer(bd.getTarget()))) {
+                return;
+            }
+        }
+        cwb.getBountyTeam().removePlayer(target);
     }
 
     /**
@@ -122,6 +143,11 @@ public class BountyManager {
         Player hunter = cwb.getServer().getPlayer(hunterName);
         cwb.getEconomy().depositPlayer(hunter, getReward(bd));
         cwb.getEconomy().depositPlayer(hunter, Math.round(bd.getBounty() / 100 * cfg.PRICE__ACCEPT_DEPOSIT_PERCENTAGE));
+
+        ParticleEffect.FLAME.display(hunter.getLocation(), 1.5f, 2.0f, 1.5f, 0.001f, 250);
+        hunter.getLocation().getWorld().playSound(hunter.getLocation(), Sound.FIREWORK_TWINKLE, 1.5f, 2.0f);
+        hunter.getLocation().getWorld().playSound(hunter.getLocation(), Sound.FIREWORK_TWINKLE2, 1.5f, 1.5f);
+
         hunter.sendMessage(Util.formatMsg("&6You collected a bounty of &e" + getReward(bd) + " coins &6by killing &5" + bd.getTarget() + "&6."));
         hunter.sendMessage(Util.formatMsg("&6You have also been refunded the coins paid for accepting the bounty."));
         cwb.getServer().broadcastMessage(Util.formatMsg("&4" + hunterName + " &6collected a bounty of &e" + getReward(bd) + " coins &6by killing " + bd.getTarget() + "."));
@@ -203,14 +229,23 @@ public class BountyManager {
             return "&cProtected";
         }
 
-        //TODO: Check for near faction home.
+        if (cwb.getFactions() != null) {
+            UPlayer uplayer = UPlayer.get(target);
+            Faction faction = uplayer.getFaction();
+            if (faction != null) {
+                if (target.getWorld().getName().equalsIgnoreCase(faction.getHome().getWorld())) {
+                    if (target.getLocation().distance(faction.getHome().asBukkitLocation()) <= cfg.FACTION_HOME_RADIUS) {
+                        return "&cNear faction home.";
+                    }
+                }
+            }
+        }
 
         Location targetLoc = target.getLocation();
         int x = targetLoc.getBlockX();
         int z = targetLoc.getBlockZ();
         int r = cfg.RANDOM_COORDS_RADIUS;
         Location loc = new Location(targetLoc.getWorld(), CWUtil.random(x-r, x+r), targetLoc.getBlockY(), CWUtil.random(z - r, z + r));
-
-        return "&4X:&c" + loc.getBlockX() + " &2Y:&a" + loc.getBlockY() + " &1Z:&9" + loc.getBlockZ();
+        return "&4X:&c" + loc.getBlockX() + " &2Y:&a" + loc.getBlockY() + " &1Z:&9" + loc.getBlockZ() + " &8[&7" + target.getWorld().getEnvironment().name() + "&8]";
     }
 }

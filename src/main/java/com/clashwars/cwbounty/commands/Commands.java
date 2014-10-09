@@ -6,6 +6,7 @@ import com.clashwars.cwbounty.Util;
 import com.clashwars.cwbounty.config.BountyData;
 import com.clashwars.cwbounty.config.PluginCfg;
 import com.clashwars.cwcore.utils.CWUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -33,18 +34,19 @@ public class Commands {
                 //###################################################### /bounty help ######################################################
                 //##########################################################################################################################
                 if (args[0].equalsIgnoreCase("help")) {
-                    sender.sendMessage(CWUtil.integrateColor("&8=========== &4&lBounty Help &8============"
-                            + "&6You can place a bounty bounty on any player."
-                            + "When this player is killed by another player he will get the bounty."
-                            + "Every hour the bounty reward will decrease by " + cfg.PRICE__PERCENTAGE_REDUCED_PER_DAY + "% of the original value."
-                            + "A bounty has to be collected within 7 days else it will expire."
-                            + "When a bounty is expired the creator will get " + cfg.PRICE__EXPIRE_REFUND_PERCENTAGE + "% of the original bounty value."
-                            + "Before you kill a bounty you have to accept it else it wont count."
-                            + "To accept a bounty you first have to pay " + cfg.PRICE__ACCEPT_DEPOSIT_PERCENTAGE + "% of the reward."
-                            + "This " + cfg.PRICE__ACCEPT_DEPOSIT_PERCENTAGE + "% will be refunded when you collect the bounty and you will of course also get the bounty."
-                            + "It's also possible to purchase coordinates as a hunter."
-                            + "These coords are a random location within " + cfg.RANDOM_COORDS_RADIUS + " blocks of the target and wont show up if the target is near the faction home."
-                            + "If you're the one being hunted you can also purchase protection per day which will hide your location from the hunters."
+                    sender.sendMessage(CWUtil.integrateColor("&8=========== &4&lBounty Help &8============"));
+                    sender.sendMessage(CWUtil.integrateColor("&6You can place a bounty bounty on any player. "
+                            + "When this player is killed by another player he will get the bounty. "
+                            + "Every hour the bounty reward will decrease by " + cfg.PRICE__PERCENTAGE_REDUCED_PER_DAY + "% of the original value. "
+                            + "A bounty has to be collected within 7 days else it will expire. "
+                            + "When a bounty is expired the creator will get " + cfg.PRICE__EXPIRE_REFUND_PERCENTAGE + "% of the original bounty value. "
+                            + "Before you kill a bounty you have to accept it else it wont count. "
+                            + "To accept a bounty you first have to pay " + cfg.PRICE__ACCEPT_DEPOSIT_PERCENTAGE + "% of the reward. "
+                            + "This " + cfg.PRICE__ACCEPT_DEPOSIT_PERCENTAGE + "% will be refunded when you collect the bounty and you will of course also get the bounty. "
+                            + "It's also possible to purchase coordinates as a hunter. "
+                            + "These coords are a random location within " + cfg.RANDOM_COORDS_RADIUS + " blocks of the target and wont show up if the target is near the faction home. "
+                            + "If you're the one being hunted you can also purchase protection per day which will hide your location from the hunters. "
+                            + "&7All commands work using ID's which can be found in the list."
                     ));
                     return true;
                 }
@@ -70,7 +72,7 @@ public class Commands {
                     }
                     Player target = cwb.getServer().getPlayer(args[1]);
                     if (target.getName().equalsIgnoreCase(player.getName())) {
-                        player.sendMessage(Util.formatMsg("Can't place a bounty on yourself..."));
+                        player.sendMessage(Util.formatMsg("&cCan't place a bounty on yourself..."));
                         return true;
                     }
 
@@ -204,7 +206,7 @@ public class Commands {
                     }
 
                     if (bd.getTarget().equalsIgnoreCase(player.getName())) {
-                        player.sendMessage(Util.formatMsg("Can't accept your own bounty..."));
+                        player.sendMessage(Util.formatMsg("&cCan't accept your own bounty..."));
                         return true;
                     }
 
@@ -314,8 +316,8 @@ public class Commands {
                     //Get all bounties which player is hunting.
                     Map<Integer, BountyData> bounties = new HashMap<Integer, BountyData>();
                     for (int ID : bm.getBounties().keySet()) {
-                        if (bounties.get(ID).getHunters().containsKey(player.getName())) {
-                            bounties.put(ID, bounties.get(ID));
+                        if (bm.getBounties().get(ID).getHunters().containsKey(player.getName())) {
+                            bounties.put(ID, bm.getBounties().get(ID));
                         }
                     }
                     int pages = Math.max(bounties.size() > 0 ? (int)Math.ceil(bounties.size()/cfg.RESULTS_PER_PAGE) : 1, 1);
@@ -363,8 +365,8 @@ public class Commands {
                     //Get all bounties with this player as target.
                     Map<Integer, BountyData> bounties = new HashMap<Integer, BountyData>();
                     for (int ID : bm.getBounties().keySet()) {
-                        if (bounties.get(ID).getTarget().equalsIgnoreCase(player.getName())) {
-                            bounties.put(ID, bounties.get(ID));
+                        if (bm.getBounties().get(ID).getTarget().equalsIgnoreCase(player.getName())) {
+                            bounties.put(ID, bm.getBounties().get(ID));
                         }
                     }
                     int resultsPerPage = cfg.RESULTS_PER_PAGE - 2;
@@ -559,7 +561,6 @@ public class Commands {
             sender.sendMessage(CWUtil.integrateColor("&6/" + label + " list [page] &8- &5List all bounties."));
             sender.sendMessage(CWUtil.integrateColor("&6/" + label + " accept {ID} &8- &5Accept a bounty and start hunting!"));
             sender.sendMessage(CWUtil.integrateColor("&6/" + label + " cancel {ID} &8- &5Cancel a accepted bounty!"));
-            sender.sendMessage(CWUtil.integrateColor("&8(&7You won't get your coins back!&8)"));
             sender.sendMessage(CWUtil.integrateColor("&6/" + label + " status [page] &8- &5See status of accepted bounties."));
             sender.sendMessage(CWUtil.integrateColor("&6/" + label + " me [page] &8- &5See all bounties on yourself."));
             sender.sendMessage(CWUtil.integrateColor("&6/" + label + " protect {days} &8- &5Purchase protection per day!"));

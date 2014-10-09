@@ -15,6 +15,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.ScoreboardManager;
+import org.bukkit.scoreboard.Team;
 
 import java.util.logging.Logger;
 
@@ -29,6 +32,9 @@ public class CWBounty extends JavaPlugin {
     private PluginCfg cfg;
     private BountyCfg bountyCfg;
     private PlayerCfg playerCfg;
+
+    private ScoreboardManager sbm;
+    private Scoreboard sb;
 
     private Commands cmds;
 
@@ -73,6 +79,14 @@ public class CWBounty extends JavaPlugin {
         playerCfg = new PlayerCfg("plugins/CWBounty/playerData.yml");
         playerCfg.load();
 
+        //Spectators scoreboard team.
+        sbm = getServer().getScoreboardManager();
+        sb = sbm.getMainScoreboard();
+        if (!sb.getTeams().contains("Bounties") && getBountyTeam() == null) {
+            sb.registerNewTeam("Bounties");
+        }
+        getBountyTeam().setPrefix(CWUtil.integrateColor("&6"));
+
         bm = new BountyManager(this);
 
         PluginManager pm = getServer().getPluginManager();
@@ -116,6 +130,10 @@ public class CWBounty extends JavaPlugin {
 
     public PlayerCfg getPlayerCfg() {
         return playerCfg;
+    }
+
+    public Team getBountyTeam() {
+        return sb.getTeam("Bounties");
     }
 
     public BountyManager getBM() {
