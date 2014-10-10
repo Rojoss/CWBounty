@@ -6,8 +6,6 @@ import com.clashwars.cwbounty.Util;
 import com.clashwars.cwbounty.config.BountyData;
 import com.clashwars.cwbounty.config.PluginCfg;
 import com.clashwars.cwcore.utils.CWUtil;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -88,7 +86,7 @@ public class Commands {
                     }
 
                     cwb.getEconomy().withdrawPlayer(player, value);
-                    int ID = cwb.getBM().createBounty(player.getName(), target.getName(), value);
+                    int ID = cwb.getBM().createBounty(player.getUniqueId(), target.getUniqueId(), value);
                     player.sendMessage(Util.formatMsg("&6Bounty created!"));
                     cwb.getServer().broadcastMessage(Util.formatMsg("&5" + player.getName() + " &6placed a bounty with a value of &e" + value + " coins &6on &5" + target.getName() + "'s &6head!"));
                     cwb.getServer().broadcastMessage(Util.formatMsg("&6Use &5/bounty accept " + ID  + " &6and &4kill &6him to collect this bounty!"));
@@ -112,21 +110,25 @@ public class Commands {
                         }
                     }
                     sender.sendMessage(CWUtil.integrateColor("&8========= &4&lListing all bounties &7[&d" + page + "&8/&5" + pages + "&7] &8========="));
-                    List<Integer> bountyIds = new ArrayList<Integer>();
-                    bountyIds.addAll(bounties.keySet());
-                    for (int i = (pages * cfg.RESULTS_PER_PAGE) - cfg.RESULTS_PER_PAGE; i < pages * cfg.RESULTS_PER_PAGE; i++) {
-                        if (!bountyIds.contains(i)) {
-                            continue;
-                        }
-                        BountyData bd = bounties.get(bountyIds.get(i));
-                        if (bd != null) {
-                            if (bm.expireBounty(bd)) {
+                    if (bounties.size() > 0) {
+                        List<Integer> bountyIds = new ArrayList<Integer>();
+                        bountyIds.addAll(bounties.keySet());
+                        for (int i = (pages * cfg.RESULTS_PER_PAGE) - cfg.RESULTS_PER_PAGE; i < pages * cfg.RESULTS_PER_PAGE; i++) {
+                            if (!bountyIds.contains(i)) {
                                 continue;
                             }
-                            sender.sendMessage(CWUtil.integrateColor("&8[&5" + bd.getID() + "&8] &6" + bd.getTarget() + " &8- &e" + bm.getReward(bd) + "&8/&7" + bd.getBounty()));
+                            BountyData bd = bounties.get(bountyIds.get(i));
+                            if (bd != null) {
+                                if (bm.expireBounty(bd)) {
+                                    continue;
+                                }
+                                sender.sendMessage(CWUtil.integrateColor("&8[&5" + bd.getID() + "&8] &6" + bd.getTarget() + " &8- &e" + bm.getReward(bd) + "&8/&7" + bd.getBounty()));
+                            }
                         }
+                        sender.sendMessage(CWUtil.integrateColor("&8===== &4Use &c/" + label + " list " + (page + 1) + " &4for the next page &8====="));
+                    } else {
+                        sender.sendMessage(CWUtil.integrateColor("&cThere are no bounties right now."));
                     }
-                    sender.sendMessage(CWUtil.integrateColor("&8===== &4Use &c/" + label + " list " + (page+1) + " &4for the next page &8====="));
                     return true;
                 }
 
@@ -161,7 +163,7 @@ public class Commands {
                     sender.sendMessage(CWUtil.integrateColor("&6Target&8: &5" + (bd.getTarget().equalsIgnoreCase(sender.getName()) ? "&c&lYou!" : bd.getTarget())));
                     sender.sendMessage(CWUtil.integrateColor("&6Original reward&8: &5" + bd.getBounty()));
                     sender.sendMessage(CWUtil.integrateColor("&6Current reward&8: &5" + bm.getReward(bd) + " &8(&7What you get&8)"));
-                    sender.sendMessage(CWUtil.integrateColor("&6Time remaining&8: &5" + CWUtil.getHourMinSecStr(bd.getTimeRemaining(), ChatColor.DARK_RED, ChatColor.RED)));
+                    sender.sendMessage(CWUtil.integrateColor("&6Time remaining&8: &5" + CWUtil.formatTime(bd.getTimeRemaining(), "&5%D&dd &5%H&8:&5%M&8:&5%S")));
 
                     //Coords
                     if (bd.getHunters().containsKey(sender.getName())) {
@@ -215,7 +217,7 @@ public class Commands {
                         return true;
                     }
 
-                    int price = Math.round(bd.getBounty() / 100 * cfg.PRICE__ACCEPT_DEPOSIT_PERCENTAGE);
+                    int price = (int)Math.round(bd.getBounty() / 100 * cfg.PRICE__ACCEPT_DEPOSIT_PERCENTAGE);
 
                     if (cwb.getEconomy().getBalance(player) < price) {
                         player.sendMessage(Util.formatMsg("&cYou don't have enough coins. You need &4" + price + " coins&c."));
@@ -226,7 +228,7 @@ public class Commands {
                         //Confirmed
                         cwb.getEconomy().withdrawPlayer(player, price);
 
-                        bm.acceptBounty(player.getName(), bd);
+                        bm.acceptBounty(player.getUniqueId(), bd);
 
                         player.sendMessage(Util.formatMsg("&6Bounty accepted for &e" + price + " coins&6."));
                         player.sendMessage(Util.formatMsg("&6Now &4kill him &6to collect your reward!"));
@@ -281,12 +283,12 @@ public class Commands {
                         return true;
                     }
 
-                    int refund = Math.round(bd.getBounty() / 100 * cfg.PRICE__CANCEL_REFUND_PERCENTAGE);
-                    refund += bd.getCoordsUnlocked(player.getName()) ? cfg.PRICE__COORDS : 0;
+                    int refund = (int)Math.round(bd.getBounty() / 100 * cfg.PRICE__CANCEL_REFUND_PERCENTAGE);
+                    refund += bd.getCoordsUnlocked(player.getUniqueId()) ? cfg.PRICE__COORDS : 0;
 
                     if (args.length >= 3) {
                         //Confirmed
-                        bm.cancelBounty(player.getName(), bd);
+                        bm.cancelBounty(player.getUniqueId(), bd);
 
                         cwb.getEconomy().depositPlayer(player, refund);
 
@@ -333,22 +335,31 @@ public class Commands {
                     }
 
                     sender.sendMessage(CWUtil.integrateColor("&8========= &4&lBounties you're hunting &7[&d" + page + "&8/&5" + pages + "&7] &8========="));
-                    List<Integer> bountyIds = new ArrayList<Integer>();
-                    bountyIds.addAll(bounties.keySet());
-                    for (int i = (pages * cfg.RESULTS_PER_PAGE) - cfg.RESULTS_PER_PAGE; i < pages * cfg.RESULTS_PER_PAGE; i++) {
-                        if (!bountyIds.contains(i)) {
-                            continue;
-                        }
-                        BountyData bd = bounties.get(bountyIds.get(i));
-                        if (bd != null) {
-                            if (bm.expireBounty(bd)) {
+                    if (bounties.size() > 0) {
+                        List<Integer> bountyIds = new ArrayList<Integer>();
+                        bountyIds.addAll(bounties.keySet());
+                        for (int i = (pages * cfg.RESULTS_PER_PAGE) - cfg.RESULTS_PER_PAGE; i < pages * cfg.RESULTS_PER_PAGE; i++) {
+                            if (!bountyIds.contains(i)) {
                                 continue;
                             }
-                            String time = CWUtil.getHourMinSecStr(bd.getTimeRemaining(), ChatColor.DARK_RED, ChatColor.RED);
-                            sender.sendMessage(CWUtil.integrateColor("&8[&5" + bd.getID() + "&8] &6" + bd.getTarget() + " &8- &e₵" + bm.getReward(bd) + " &7- " + time));
+                            BountyData bd = bounties.get(bountyIds.get(i));
+                            if (bd != null) {
+                                if (bm.expireBounty(bd)) {
+                                    continue;
+                                }
+                                String time = CWUtil.formatTime(bd.getTimeRemaining(), "&4%D&cd &4%H&8:&4%M&8:&4%S");
+                                Player target = cwb.getServer().getPlayer(bd.getTarget());
+                                sender.sendMessage(CWUtil.integrateColor("&8[&5" + bd.getID() + "&8] &6" + target == null ? "&c" + bd.getTarget() : "&a" + bd.getTarget()
+                                        + " &8- &e₵" + bm.getReward(bd) + " &7- " + time + " &7- &5" + (bd.getHunters().get(player.getName()) ? bm.getLocation(bd) : "&7Not purchased")));
+                            }
                         }
+                        sender.sendMessage(CWUtil.integrateColor("&8===== &4Use &c/" + label + " " + args[0] + " " + (page + 1) + " &4for the next page &8====="));
+                    } else {
+                        sender.sendMessage(CWUtil.integrateColor("&6You haven't accepted any bounties yet."));
+                        sender.sendMessage(CWUtil.integrateColor("&6Look at the bounty list with &5/bounty list."));
+                        sender.sendMessage(CWUtil.integrateColor("&6And then accept one by doing &5/bounty accept {ID}."));
+                        sender.sendMessage(CWUtil.integrateColor("&6The ID can be found in the brackets on the left of the list."));
                     }
-                    sender.sendMessage(CWUtil.integrateColor("&8===== &4Use &c/" + label + " " + args[0] + " " + (page+1) + " &4for the next page &8====="));
                     return true;
                 }
 
@@ -396,7 +407,7 @@ public class Commands {
                                 if (bm.expireBounty(bd)) {
                                     continue;
                                 }
-                                String time = CWUtil.getHourMinSecStr(bd.getTimeRemaining(), ChatColor.DARK_RED, ChatColor.RED);
+                                String time = CWUtil.formatTime(bd.getTimeRemaining(), "&4%D&cd &4%H&8:&4%M&8:&4%S");
                                 sender.sendMessage(CWUtil.integrateColor("&8[&5" + bd.getID() + "&8] &6" + bd.getCreator() + " &8- &e₵" + bm.getReward(bd) + " &7- " + time
                                         + " &7- &c" + bd.getHunters().size() + " hunters"));
 
@@ -410,9 +421,9 @@ public class Commands {
                         }
 
                         if (huntersWithCoords.size() > 0) {
-                            if (cwb.getPlayerCfg().hasProtection(player.getName())) {
-                                sender.sendMessage(CWUtil.integrateColor("&6Nobody can see your coordinates till &a"
-                                        + CWUtil.getHourMinSecStr(cwb.getPlayerCfg().getProtection(player.getName()), ChatColor.GREEN, ChatColor.GRAY) + "&l!"));
+                            if (cwb.getPlayerCfg().hasProtection(player.getUniqueId())) {
+                                sender.sendMessage(CWUtil.integrateColor("&6Nobody can see your coordinates for &a"
+                                        + CWUtil.formatTime(cwb.getPlayerCfg().getProtectionTimeRemaining(player.getUniqueId()), "&5%D&dd &5%H&8:&5%M") + "&l!"));
                             } else {
                                 sender.sendMessage(CWUtil.integrateColor("&6The following hunters can see your location&8: &5" + CWUtil.implode(huntersWithCoords, "&8, &5")));
                             }
@@ -446,7 +457,7 @@ public class Commands {
                         return true;
                     }
                     int days = CWUtil.getInt(args[1]);
-                    float price = days * cfg.PRICE__PROTECTION_PER_DAY;
+                    double price = days * cfg.PRICE__PROTECTION_PER_DAY;
 
                     if (cwb.getEconomy().getBalance(player) < price) {
                         player.sendMessage(Util.formatMsg("&cYou don't have enough coins. You need &4" + price + " coins&c."));
@@ -457,15 +468,15 @@ public class Commands {
                         //Confirmed
                         cwb.getEconomy().withdrawPlayer(player, price);
 
-                        long protTime = System.currentTimeMillis();
-                        if (cwb.getPlayerCfg().hasProtection(player.getName())) {
-                            protTime = cwb.getPlayerCfg().getProtection(player.getName());
+                        long protTime = cwb.getPlayerCfg().getProtection(player.getUniqueId());
+                        if (protTime < System.currentTimeMillis()) {
+                            protTime = System.currentTimeMillis();
                         }
 
-                        cwb.getPlayerCfg().setProtection(player.getName(), protTime + (days * 86400));
+                        cwb.getPlayerCfg().setProtection(player.getUniqueId(), protTime + (days * 86400000));
                         player.sendMessage(Util.formatMsg("&6You have bought &a" + days + " &6days of protection!"));
-                        player.sendMessage(Util.formatMsg("&6You are protected till &a"
-                                + CWUtil.getHourMinSecStr(cwb.getPlayerCfg().getProtectionTimeRemaining(player.getName()), ChatColor.GREEN, ChatColor.GRAY) + "&6."));
+                        player.sendMessage(Util.formatMsg("&6You are protected for &a"
+                                + CWUtil.formatTime(cwb.getPlayerCfg().getProtectionTimeRemaining(player.getUniqueId()), "&5%D&dd &5%H&8:&5%M") + "&6."));
                     } else {
                         //Unconfirmed
                         player.sendMessage(Util.formatMsg("&6You're about to purchase &5" + days + " &6days of protection for &e₵" + price + "&6. "
@@ -514,7 +525,7 @@ public class Commands {
                         return true;
                     }
 
-                    if (bd.getCoordsUnlocked(player.getName())) {
+                    if (bd.getCoordsUnlocked(player.getUniqueId())) {
                         player.sendMessage(Util.formatMsg("&cCoordinates already purchased."));
                         return true;
                     }
@@ -527,27 +538,30 @@ public class Commands {
                     if (args.length >= 3) {
                         //Confirmed
                         cwb.getEconomy().withdrawPlayer(player, cfg.PRICE__COORDS);
-                        bd.setCoordsUnlocked(player.getName(), true);
+                        bd.setCoordsUnlocked(player.getUniqueId(), true);
+                        bm.setBounty(bd);
 
                         player.sendMessage(Util.formatMsg("&6Coordinates have been purchased for &e" + cfg.PRICE__COORDS + " coins&6."));
                         if (cwb.getServer().getPlayer(bd.getTarget()) != null && cwb.getServer().getPlayer(bd.getTarget()).isOnline()) {
-                            Player target =  cwb.getServer().getPlayer(bd.getTarget());
-                            if (!cwb.getPlayerCfg().hasProtection(bd.getTarget())) {
+                            Player target = cwb.getServer().getPlayer(bd.getTarget());
+                            if (!cwb.getPlayerCfg().hasProtection(target.getUniqueId())) {
                                 target.sendMessage(Util.formatMsg("&5" + player.getName() + " &6can now locate you."));
                                 target.sendMessage(Util.formatMsg("&6Use &5/bounty protect &6to hide your location for coins."));
                             } else {
                                 target.sendMessage(Util.formatMsg("&5" + player.getName() + " &6has purchased your location."));
-                                target.sendMessage(Util.formatMsg("&6However, you are protected for &5" + cwb.getPlayerCfg().getProtectionDays(bd.getTarget()) + " &6more days."));
+                                target.sendMessage(Util.formatMsg("&6However, you are protected for &5"
+                                      + CWUtil.formatTime(cwb.getPlayerCfg().getProtection(target.getUniqueId()), "&5%D&dd &5%H&8:&5%M") + " &6."));
                             }
                         }
                     } else {
                         //Unconfirmed
-                        player.sendMessage(Util.formatMsg("&6You're about to purchase &5" + bd.getTarget() + "'s &6coordinates. &e&l₵" + cfg.PRICE__COORDS
-                                + "&6His location will update every time you check it. "
+                        player.sendMessage(Util.formatMsg("&6You're about to purchase &5" + bd.getTarget() + "'s &6coordinates for &e₵" + cfg.PRICE__COORDS
+                                + " &6His location will update every time you check it. "
                                 + "However, if he's near his faction home it wont show the location. "
                                 + "He can also purchase protection which makes you unable to locate him. "
                                 + "And the location is random within 100 blocks radius of him."));
-                        player.sendMessage(Util.formatMsg("&5" + bd.getTarget() + " &6has &5" + cwb.getPlayerCfg().getProtectionDays(bd.getTarget()) + " &6days of protection currently."));
+                        player.sendMessage(Util.formatMsg("&5" + bd.getTarget() + " &6has &5"
+                                + CWUtil.formatTime(cwb.getPlayerCfg().getProtectionTimeRemaining(cwb.getServer().getOfflinePlayer(bd.getTarget()).getUniqueId()), "&5%D&dd &5%H&8:&5%M") + " &6protection currently."));
                         player.sendMessage(Util.formatMsg("&6Use &5/" + label + " " + args[0] + " " + args[1] + " confirm/c &6to confirm this."));
                     }
                     return true;

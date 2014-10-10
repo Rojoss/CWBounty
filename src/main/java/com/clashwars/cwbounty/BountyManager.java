@@ -17,6 +17,7 @@ import org.bukkit.entity.Player;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class BountyManager {
 
@@ -83,7 +84,7 @@ public class BountyManager {
      * @param value The amount of coins this bounty has.
      * @return The ID of the bounty.
      */
-    public int createBounty(String creator, String target, int value) {
+    public int createBounty(UUID creator, UUID target, int value) {
         BountyData bd = new BountyData();
 
         int i = 0;
@@ -178,7 +179,7 @@ public class BountyManager {
      * @param hunter The name of the hunter that has accepted the bounty.
      * @param bd The bounty.
      */
-    public void acceptBounty(String hunter, BountyData bd) {
+    public void acceptBounty(UUID hunter, BountyData bd) {
         bd.addHunter(hunter, false);
         setBounty(bd);
     }
@@ -188,7 +189,7 @@ public class BountyManager {
      * @param hunter The name of the hunter that has cancelled hunting the bounty.
      * @param bd The bounty.
      */
-    public void cancelBounty(String hunter, BountyData bd) {
+    public void cancelBounty(UUID hunter, BountyData bd) {
         bd.removeHunter(hunter);
         setBounty(bd);
     }
@@ -225,7 +226,7 @@ public class BountyManager {
             return "&4Offline";
         }
 
-        if (pCfg.getProtection(bd.getTarget()) > 0) {
+        if (pCfg.getProtection(target.getUniqueId()) > 0) {
             return "&cProtected";
         }
 
@@ -246,6 +247,13 @@ public class BountyManager {
         int z = targetLoc.getBlockZ();
         int r = cfg.RANDOM_COORDS_RADIUS;
         Location loc = new Location(targetLoc.getWorld(), CWUtil.random(x-r, x+r), targetLoc.getBlockY(), CWUtil.random(z - r, z + r));
-        return "&4X:&c" + loc.getBlockX() + " &2Y:&a" + loc.getBlockY() + " &1Z:&9" + loc.getBlockZ() + " &8[&7" + target.getWorld().getEnvironment().name() + "&8]";
+        String worldName = target.getWorld().getName();
+        if (worldName.equalsIgnoreCase("world_the_end")) {
+            worldName = "end";
+        }
+        if (worldName.equalsIgnoreCase("world_nether")) {
+            worldName = "nether";
+        }
+        return "&4X:&c" + loc.getBlockX() + " &2Y:&a" + loc.getBlockY() + " &1Z:&9" + loc.getBlockZ() + " &8[&7" + worldName + "&8]";
     }
 }

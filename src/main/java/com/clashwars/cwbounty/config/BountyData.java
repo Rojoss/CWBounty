@@ -1,9 +1,8 @@
 package com.clashwars.cwbounty.config;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.bukkit.Bukkit;
+
+import java.util.*;
 
 public class BountyData {
 
@@ -27,18 +26,18 @@ public class BountyData {
 
 
     public String getCreator() {
-        return creator;
+        return Bukkit.getPlayer(UUID.fromString(creator)).getName();
     }
-    public void setCreator(String creator) {
-        this.creator = creator;
+    public void setCreator(UUID creator) {
+        this.creator = creator.toString();
     }
 
 
     public String getTarget() {
-        return creator;
+        return Bukkit.getPlayer(UUID.fromString(target)).getName();
     }
-    public void setTarget(String target) {
-        this.target = target;
+    public void setTarget(UUID target) {
+        this.target = target.toString();
     }
 
 
@@ -64,25 +63,26 @@ public class BountyData {
 
 
     public Map<String, Boolean> getHunters() {
-        return hunters;
+        Map<String, Boolean> playerHunters = new HashMap<String, Boolean>();
+        for (String uuid : hunters.keySet()) {
+            playerHunters.put(Bukkit.getOfflinePlayer(UUID.fromString(uuid)).getName(), hunters.get(uuid));
+        }
+        return playerHunters;
     }
-    public void setHunters(Map<String, Boolean> hunters) {
-        this.hunters = hunters;
+    public void addHunter(UUID hunter, boolean unlockedCoords) {
+        hunters.put(hunter.toString(), unlockedCoords);
     }
-    public void addHunter(String hunter, boolean unlockedCoords) {
-        hunters.put(hunter, unlockedCoords);
-    }
-    public void removeHunter(String hunter) {
-        hunters.remove(hunter);
+    public void removeHunter(UUID hunter) {
+        hunters.remove(hunter.toString());
     }
 
-    public boolean getCoordsUnlocked(String hunter) {
-        if (hunters.containsKey(hunter)) {
-            return hunters.get(hunter);
+    public boolean getCoordsUnlocked(UUID hunter) {
+        if (hunters.containsKey(hunter.toString())) {
+            return hunters.get(hunter.toString());
         }
         return false;
     }
-    public void setCoordsUnlocked(String hunter, boolean unlocked) {
-        hunters.put(hunter, unlocked);
+    public void setCoordsUnlocked(UUID hunter, boolean unlocked) {
+        hunters.put(hunter.toString(), unlocked);
     }
 }
