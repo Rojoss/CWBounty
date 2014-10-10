@@ -26,7 +26,7 @@ public class BountyData {
 
 
     public String getCreator() {
-        return Bukkit.getPlayer(UUID.fromString(creator)).getName();
+        return Bukkit.getOfflinePlayer(UUID.fromString(creator)).getName();
     }
     public void setCreator(UUID creator) {
         this.creator = creator.toString();
@@ -34,7 +34,7 @@ public class BountyData {
 
 
     public String getTarget() {
-        return Bukkit.getPlayer(UUID.fromString(target)).getName();
+        return Bukkit.getOfflinePlayer(UUID.fromString(target)).getName();
     }
     public void setTarget(UUID target) {
         this.target = target.toString();

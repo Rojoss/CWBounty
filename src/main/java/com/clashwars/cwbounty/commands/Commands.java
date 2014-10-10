@@ -114,7 +114,7 @@ public class Commands {
                         List<Integer> bountyIds = new ArrayList<Integer>();
                         bountyIds.addAll(bounties.keySet());
                         for (int i = (pages * cfg.RESULTS_PER_PAGE) - cfg.RESULTS_PER_PAGE; i < pages * cfg.RESULTS_PER_PAGE; i++) {
-                            if (!bountyIds.contains(i)) {
+                            if (i >= bountyIds.size()) {
                                 continue;
                             }
                             BountyData bd = bounties.get(bountyIds.get(i));
@@ -159,7 +159,7 @@ public class Commands {
                     }
 
                     sender.sendMessage(CWUtil.integrateColor("&8========= &4&lBounty information &8========="));
-                    sender.sendMessage(CWUtil.integrateColor("&6Creator&8: &5" + (bd.getTarget().equalsIgnoreCase(sender.getName()) ? "&aYou!" : bd.getTarget())));
+                    sender.sendMessage(CWUtil.integrateColor("&6Creator&8: &5" + (bd.getCreator().equalsIgnoreCase(sender.getName()) ? "&aYou!" : bd.getCreator())));
                     sender.sendMessage(CWUtil.integrateColor("&6Target&8: &5" + (bd.getTarget().equalsIgnoreCase(sender.getName()) ? "&c&lYou!" : bd.getTarget())));
                     sender.sendMessage(CWUtil.integrateColor("&6Original reward&8: &5" + bd.getBounty()));
                     sender.sendMessage(CWUtil.integrateColor("&6Current reward&8: &5" + bm.getReward(bd) + " &8(&7What you get&8)"));
@@ -207,7 +207,7 @@ public class Commands {
                         return true;
                     }
 
-                    if (bd.getTarget().equalsIgnoreCase(player.getName())) {
+                    if (bd.getTarget().equalsIgnoreCase(player.getName()) || bd.getCreator().equalsIgnoreCase(player.getName())) {
                         player.sendMessage(Util.formatMsg("&cCan't accept your own bounty..."));
                         return true;
                     }
@@ -339,7 +339,7 @@ public class Commands {
                         List<Integer> bountyIds = new ArrayList<Integer>();
                         bountyIds.addAll(bounties.keySet());
                         for (int i = (pages * cfg.RESULTS_PER_PAGE) - cfg.RESULTS_PER_PAGE; i < pages * cfg.RESULTS_PER_PAGE; i++) {
-                            if (!bountyIds.contains(i)) {
+                            if (i >= bountyIds.size()) {
                                 continue;
                             }
                             BountyData bd = bounties.get(bountyIds.get(i));
@@ -399,7 +399,7 @@ public class Commands {
                         bountyIds.addAll(bounties.keySet());
                         Set<String> huntersWithCoords = new HashSet<String>();
                         for (int i = (pages * resultsPerPage) - resultsPerPage; i < pages * resultsPerPage; i++) {
-                            if (!bountyIds.contains(i)) {
+                            if (i >= bountyIds.size()) {
                                 continue;
                             }
                             BountyData bd = bounties.get(bountyIds.get(i));

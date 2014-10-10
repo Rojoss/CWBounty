@@ -233,7 +233,7 @@ public class BountyManager {
         if (cwb.getFactions() != null) {
             UPlayer uplayer = UPlayer.get(target);
             Faction faction = uplayer.getFaction();
-            if (faction != null) {
+            if (faction != null && faction.getHome() != null) {
                 if (target.getWorld().getName().equalsIgnoreCase(faction.getHome().getWorld())) {
                     if (target.getLocation().distance(faction.getHome().asBukkitLocation()) <= cfg.FACTION_HOME_RADIUS) {
                         return "&cNear faction home.";
