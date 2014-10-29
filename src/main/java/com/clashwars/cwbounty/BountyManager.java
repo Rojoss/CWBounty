@@ -163,7 +163,7 @@ public class BountyManager {
      */
     public boolean expireBounty(BountyData bd) {
         if (bd.getTimeRemaining() <= 0) {
-            OfflinePlayer creator = cwb.getServer().getPlayer(bd.getCreator());
+            OfflinePlayer creator = cwb.getServer().getOfflinePlayer(bd.getCreator());
             cwb.getEconomy().depositPlayer(creator, (bd.getBounty() / 100 * cfg.PRICE__EXPIRE_REFUND_PERCENTAGE));
             if (creator != null && creator.isOnline()) {
                 ((Player)creator).sendMessage(Util.formatMsg("&6Your bounty expired. 50% of the original bounty value has been refunded."));
